@@ -15,6 +15,7 @@ function getData(url, callback) {
         ],
         '/cities': [
             {name: 'Bamenda', country: 'Cameroon'},
+            {name: 'Asd', country: 'Cameroon'},
             {name: 'Suva', country: 'Fiji Islands'},
             {name: 'Quetzaltenango', country: 'Guatemala'},
             {name: 'Osaka', country: 'Japan'},
@@ -44,8 +45,14 @@ function getData(url, callback) {
 /**
  * Ваши изменения ниже
  */
-var requests = ['/countries', '/cities', '/populations'];
-var responses = {};
+
+var requests = ['/countries', '/cities', '/populations'],
+    responses = {},
+    countries,
+    cities,
+    populations,
+    name,
+    answer;
 
 for (i = 0; i < 3; i++) {
     (function () {
@@ -86,3 +93,84 @@ for (i = 0; i < 3; i++) {
         getData(request, callback);
     })();
 }
+
+var isCountry = function (name) {
+    return countries.some(function (country) {
+        return country.name == name;
+    });
+}
+
+var countPopulation = function (name) {
+    var result = 0,
+        error = "No such city or country - ",
+        callee = arguments.callee;
+
+    if (!isCountry(name)) {
+        populations.forEach(function(item) {
+            if (item.name == name) {
+                result += item.count;
+                error = null;
+            }
+        });
+
+        if (error) {
+            error += name;
+        }
+
+        return { 'result' : result, 'error' : error };
+    }
+    else {
+        cities.forEach(function (city) {
+            if (city.country == name) {
+                var response = callee(city.name);
+                result += response.result;
+                error = response.error;
+            }
+        });
+    }
+
+    return { 'result' : result, 'error' : error };
+}
+
+var setCountries = function (error, result) {
+    if (error) {
+        console.log(error);
+        return;
+    }
+    countries = result;
+    getData('/cities', setCities);
+}
+
+var setCities = function (error, result) {
+    if (error) {
+        console.log(error);
+        return;
+    }
+    cities = result;
+    getData('/populations', setPopulations);
+}
+
+var setPopulations = function (error, result) {
+    if (error) {
+        console.log(error);
+        return;
+    }
+
+    populations = result;
+
+    name =  prompt("Enter country or city", "Cameroon");
+
+    answer = countPopulation(name);
+
+    if (answer.error) {
+        console.log(answer.error);
+    }
+    else {
+        console.log("population in " + name + " is " + answer.result + ".");
+    }
+
+}
+
+getData('/countries', setCountries);
+
+
