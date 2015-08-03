@@ -2,7 +2,7 @@
  * Реализация API, не изменяйте ее
  * @param {string} url
  * @param {function} callback
- */
+*/
 function getData(url, callback) {
     var RESPONSES = {
         '/countries': [
@@ -44,7 +44,52 @@ function getData(url, callback) {
 
 /**
  * Ваши изменения ниже
- */
+*/
+
+/**
+  Версия API которая возвращает Promise
+*/
+function getDataPromise(url) {
+    return new Q.Promise(function (resolve, reject) {
+       var RESPONSES = {
+          '/countries': [
+              {name: 'Cameroon', continent: 'Africa'},
+              {name :'Fiji Islands', continent: 'Oceania'},
+              {name: 'Guatemala', continent: 'North America'},
+              {name: 'Japan', continent: 'Asia'},
+              {name: 'Yugoslavia', continent: 'Europe'},
+              {name: 'Tanzania', continent: 'Africa'}
+          ],
+          '/cities': [
+              {name: 'Bamenda', country: 'Cameroon'},
+              {name: 'Suva', country: 'Fiji Islands'},
+              {name: 'Quetzaltenango', country: 'Guatemala'},
+              {name: 'Osaka', country: 'Japan'},
+              {name: 'Subotica', country: 'Yugoslavia'},
+              {name: 'Zanzibar', country: 'Tanzania'},
+          ],
+          '/populations': [
+              {count: 138000, name: 'Bamenda'},
+              {count: 77366, name: 'Suva'},
+              {count: 90801, name: 'Quetzaltenango'},
+              {count: 2595674, name: 'Osaka'},
+              {count: 100386, name: 'Subotica'},
+              {count: 157634, name: 'Zanzibar'}
+          ]
+      };
+
+      setTimeout(function () {
+          var result = RESPONSES[url];
+
+          if (!result) {
+              reject('Unknown url - ' + url);
+          }
+
+          resolve(result);
+      }, Math.round(Math.random * 1000));
+
+    });
+}
 
 var requests = ['/countries', '/cities', '/populations'],
     responses = {},
@@ -53,6 +98,10 @@ var requests = ['/countries', '/cities', '/populations'],
     populations,
     name,
     answer;
+
+/**
+  исправленный фрагмент подсчета суммарной популяции Африки, из исправлений - только обертка
+*/
 
 for (i = 0; i < 3; i++) {
     (function () {
@@ -94,6 +143,10 @@ for (i = 0; i < 3; i++) {
     })();
 }
 
+/**
+  Вторая часть задания
+*/
+
 var isCountry = function (name) {
     return countries.some(function (country) {
         return country.name == name;
@@ -132,45 +185,26 @@ var countPopulation = function (name) {
     return { 'result' : result, 'error' : error };
 }
 
-var setCountries = function (error, result) {
-    if (error) {
-        console.log(error);
-        return;
-    }
-    countries = result;
-    getData('/cities', setCities);
-}
+Q.all([getDataPromise('/countries'), getDataPromise('/cities'), getDataPromise('/populations')])
+    .then(
+        function (result) {
+            countries = result[0];
+            cities = result[1];
+            populations = result[2];
+            name = prompt("Enter country or city", "Cameroon");
 
-var setCities = function (error, result) {
-    if (error) {
-        console.log(error);
-        return;
-    }
-    cities = result;
-    getData('/populations', setPopulations);
-}
+            answer = countPopulation(name);
 
-var setPopulations = function (error, result) {
-    if (error) {
-        console.log(error);
-        return;
-    }
+            if (answer.error) {
+                console.log(answer.error);
+            } else {
+                console.log("Population in " + name + ": " + answer.result + ".");
+            }
+        },
+        function (reason) {
+            console.log(reason);
+        }
+    );
 
-    populations = result;
-
-    name =  prompt("Enter country or city", "Cameroon");
-
-    answer = countPopulation(name);
-
-    if (answer.error) {
-        console.log(answer.error);
-    }
-    else {
-        console.log("population in " + name + " is " + answer.result + ".");
-    }
-
-}
-
-getData('/countries', setCountries);
 
 
