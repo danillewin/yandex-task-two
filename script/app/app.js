@@ -158,37 +158,47 @@ var isCountry = function (name) {
     });
 };
 
+var isCity = function () {
+    return cities.some(function (city) {
+        return city.name == name;
+    });
+}
+
+var countPopulationCity = function (name) {
+    var result = 0;
+
+    populations.forEach(function (city) {
+        if (city.name == name) {
+            result = city.count;
+        }
+    });
+
+    return result;
+}
+
 var countPopulation = function (name) {
-    var result = 0,
-        error = "No such city or country - ",
-        callee = arguments.callee;
+    var result = 0;
 
     if (isCountry(name)) {
         cities.forEach(function (city) {
             if (city.country == name) {
-                var response = callee(city.name);
-                result += response.result;
-                error = response.error;
-            }
-        });
-    }
-    else {
-        populations.forEach(function(item) {
-            if (item.name == name) {
-                result += item.count;
-                error = null;
+                result += countPopulationCity(city.name);
             }
         });
 
-        if (error) {
-            error += name;
-        }
-
-        return { 'result' : result, 'error' : error };
+        return { result: result, error: null };
     }
 
-    return { 'result' : result, 'error' : error };
+    if (isCity(name)) {
+        result = countPopulationCity(name);
+
+        return { result: result, error: null };
+    }
+
+    return { result: null, error: "No such city or country - " + name + "." };
 };
+
+
 
 Q.all([getDataPromise('/countries'), getDataPromise('/cities'), getDataPromise('/populations')])
     .then(
@@ -201,10 +211,13 @@ Q.all([getDataPromise('/countries'), getDataPromise('/cities'), getDataPromise('
             answer = countPopulation(name);
 
             if (answer.error) {
-                console.log(answer.error);
-            } else {
+                console.log(answer.error)
+            }
+            else {
                 console.log("Population in " + name + ": " + answer.result + ".");
             }
+
+
         },
         function (reason) {
             console.log(reason);
