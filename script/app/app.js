@@ -104,7 +104,7 @@ var requests = ['/countries', '/cities', '/populations'],
     i;
 
 /**
-  исправленный фрагмент подсчета суммарной популяции Африки, из исправлений - только обертка
+  Исправленный фрагмент подсчета суммарной популяции Африки, из исправлений - только обертка
 */
 
 for (i = 0; i < 3; i++) {
@@ -163,7 +163,16 @@ var countPopulation = function (name) {
         error = "No such city or country - ",
         callee = arguments.callee;
 
-    if (!isCountry(name)) {
+    if (isCountry(name)) {
+        cities.forEach(function (city) {
+            if (city.country == name) {
+                var response = callee(city.name);
+                result += response.result;
+                error = response.error;
+            }
+        });
+    }
+    else {
         populations.forEach(function(item) {
             if (item.name == name) {
                 result += item.count;
@@ -176,15 +185,6 @@ var countPopulation = function (name) {
         }
 
         return { 'result' : result, 'error' : error };
-    }
-    else {
-        cities.forEach(function (city) {
-            if (city.country == name) {
-                var response = callee(city.name);
-                result += response.result;
-                error = response.error;
-            }
-        });
     }
 
     return { 'result' : result, 'error' : error };
@@ -210,5 +210,4 @@ Q.all([getDataPromise('/countries'), getDataPromise('/cities'), getDataPromise('
             console.log(reason);
         }
     );
-
 
